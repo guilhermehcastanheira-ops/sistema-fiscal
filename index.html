@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAF — Sistema Integrado de Assuntos Fiscais</title>
+    <style>
+        :root {
+            --primaria: #002157;
+            --secundaria: #003366;
+            --destaque: #c5a059;
+            --destaque-grad: linear-gradient(135deg, #c5a059 0%, #d4b16a 100%);
+            --sucesso: #28a745;
+            --erro: #dc3545;
+            --alerta: #ffc107;
+            --fundo-sistema: #f0f2f5;
+            --branco: #ffffff;
+            --sombra-leve: 0 4px 20px rgba(0, 33, 87, 0.08);
+            --sombra-media: 0 8px 30px rgba(0, 33, 87, 0.12);
+            --sombra-forte: 0 15px 40px rgba(0, 33, 87, 0.18);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--fundo-sistema);
+            background-image: 
+                radial-gradient(rgba(0, 33, 87, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, transparent 99%, rgba(0, 33, 87, 0.02) 100%);
+            background-size: 40px 40px, 20px 100%;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 51, 102, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(197, 160, 89, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 300px;
+            background: rgba(0, 33, 87, 0.98);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-shadow: 6px 0 25px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .sidebar-header {
+            padding: 35px 25px;
+            background: rgba(0, 0, 0, 0.15);
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+        }
+
+        .sidebar-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 25%;
+            width: 50%;
+            height: 2px;
+            background: var(--destaque-grad);
+            border-radius: 2px;
+        }
+
+        .sidebar-header img {
+            height: 75px;
+            filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .sidebar-header:hover img {
+            transform: scale(1.05);
+        }
+
+        .nav-group {
+            padding: 25px 20px;
+            flex: 1;
+        }
+
+        .nav-item {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 14.5px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            border-left: 4px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .nav-item:hover::before {
+            left: 100%;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            border-left: 4px solid var(--destaque);
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            right: 20px;
+            width: 8px;
+            height: 8px;
+            background: var(--destaque);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--destaque);
+        }
+
+        /* --- CONTEÚDO PRINCIPAL --- */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            height: 95px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 50px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            border-bottom: 3px solid var(--destaque);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            border-left: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 35px;
+            position: relative;
+        }
+
+        .logo-container::after {
+            content: '';
+            position: absolute;
+            right: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 40px;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, rgba(0, 33, 87, 0.3), transparent);
+        }
+
+        .logo-container img {
+            transition: transform 0.4s ease;
+        }
+
+        .logo-container img:hover {
+            transform: translateY(-2px);
+        }
+
+        .system-status {
+            position: absolute;
+            top: 110px;
+            right: 50px;
+            font-size: 11.5px;
+            color: var(--sucesso);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: rgba(40, 167, 69, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--sucesso);
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+            box-shadow: 0 0 12px var(--sucesso);
+            position: relative;
+        }
+
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 1px solid rgba(40, 167, 69, 0.4);
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        /* --- SISTEMA DE ABAS --- */
+        .content-area {
+            display: none;
+            padding: 65px 50px;
+            max-width: 1250px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0 auto;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .content-area.active {
+            display: block;
+            animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.98);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .page-title h1 {
+            font-size: 36px;
+            color: var(--primaria);
+            margin: 0;
+            letter-spacing: -1px;
+            font-weight: 900;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 12px;
+        }
+
+        .page-title h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 70px;
+            height: 4px;
+            background: var(--destaque-grad);
+            border-radius: 2px;
+        }
+
+        .page-title p {
+            color: #666;
+            margin: 15px 0 40px 0;
+            font-size: 17px;
+            line-height: 1.5;
+            max-width: 800px;
+        }
+
+        /* --- FORMULÁRIO --- */
+        .form-card {
+            background: var(--branco);
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: var(--sombra-forte);
+            border: 1px solid rgba(209, 217, 224, 0.6);
+            border-top: 8px solid var(--destaque);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 33, 87, 0.15);
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primaria), var(--destaque), var(--primaria));
+            opacity: 0.2;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 35px;
+        }
+
+        .section-label {
+            grid-column: span 2;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--destaque);
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            padding-bottom: 15px;
+            margin-top: 30px;
+            position: relative;
+            border-bottom: none;
+        }
+
+        .section-label::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--destaque), transparent);
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label::before {
+            content: '•';
+            color: var(--destaque);
+            font-size: 20px;
+            line-height: 0;
+        }
+
+        input, select, textarea {
+            height: 56px;
+            border: 2px solid #e8ecef;
+            border-radius: 16px;
+            padding: 0 20px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #fdfdfe;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        input:hover, select:hover, textarea:hover {
+            border-color: #d1d9e0;
+            background: #fafbfc;
+        }
+
+        textarea {
+            height: 140px;
+            padding: 20px;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--destaque);
+            background: white;
+            box-shadow: 0 0 0 6px rgba(197, 160, 89, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* --- ESTILOS PARA VALIDAÇÃO --- */
+        .input-error {
+            border-color: var(--erro) !important;
+            background: #fff5f5 !important;
+        }
+
+        .input-error:focus {
+            box-shadow: 0 0 0 6px rgba(220, 53, 69, 0.15) !important;
+        }
+
+        .error-message {
+            color: var(--erro);
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .error-message::before {
+            content: '⚠';
+            font-size: 14px;
+        }
+
+        .form-message {
+            grid-column: span 2;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .form-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .form-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .form-message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+
+        /* --- MARCA D'ÁGUA --- */
+        .watermark-rfb {
+            position: fixed;
+            top: 55%;
+            left: calc(50% + 150px);
+            transform: translate(-50%, -50%) rotate(-5deg);
+            width: 800px;
+            opacity: 0.035;
+            pointer-events: none;
+            z-index: 0;
+            filter: grayscale(1) brightness(1.2);
+        }
+
+        /* --- TRANSPARÊNCIA FISCAL MELHORADA --- */
+        .impostometro-container {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+            border-radius: 24px;
+            color: #00ff00;
+            margin-bottom: 45px;
+            border: 3px solid #222;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.3),
+                inset 0 0 40px rgba(0, 255, 0, 0.08),
+                0 0 30px rgba(0, 255, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .impostometro-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .impostometro-valor {
+            font-size: 64px;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+            letter-spacing: -1.5px;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(to bottom, #00ff00, #00cc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .impostometro-valor::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 50%, rgba(0, 255, 0, 0.1) 50%);
+            background-size: 10px 100%;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* --- ESTATÍSTICAS DETALHADAS --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid #e8ecef;
+            box-shadow: var(--sombra-leve);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--sombra-media);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primaria);
+            margin: 10px 0;
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trend-up {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .trend-down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .trend-neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .stat-detail {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        /* --- GRÁFICO SIMULADO --- */
+        .grafico-container {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid #e8ecef;
+            box-shadow: var(--sombra-leve);
+        }
+
+        .grafico-barras {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            height: 200px;
+            margin-top: 20px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f2f5;
+            position: relative;
+        }
+
+        .barra {
+            flex: 1;
+            background: linear-gradient(to top, var(--primaria), var(--secundaria));
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            min-height: 20px;
+            transition: height 0.5s ease;
+        }
+
+        .barra-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .barra-valor {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primaria);
+        }
+
+        .legenda-container {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .legenda-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legenda-cor {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* --- DISTRIBUIÇÃO DETALHADA --- */
+        .distribuicao-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .distribuicao-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            border-left: 5px solid;
+            box-shadow: var(--sombra-leve);
+        }
+
+        .distribuicao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .distribuicao-titulo {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primaria);
+        }
+
+        .distribuicao-porcentagem {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .distribuicao-valor {
+            font-size: 18px;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .distribuicao-lista {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0 0 0;
+        }
+
+        .distribuicao-lista li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 13.5px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .distribuicao-lista li:last-child {
+            border-bottom: none;
+        }
+
+        /* --- CHECKBOX E BOTÕES --- */
+        .termos-container {
+            grid-column: span 2;
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(to right, #f9fafb, #f5f7fa);
+            border-radius: 16px;
+            border: 1px solid #edf2f7;
+            display: flex;
+            gap: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-items: flex-start;
+        }
+
+        .termos-container:hover {
+            background: linear-gradient(to right, #f1f4f8, #ecf0f5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 33, 87, 0.05);
+        }
+
+        .termos-container input {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            margin-top: 2px;
+            border-radius: 6px;
+            border: 2px solid #d1d9e0;
+            transition: all 0.3s;
+        }
+
+        .termos-container input:checked {
+            background-color: var(--destaque);
+            border-color: var(--destaque);
+            position: relative;
+        }
+
+        .termos-container input:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .termos-texto {
+            flex: 1;
+            font-size: 14.5px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .footer-actions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f2f5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 25px;
+            position: relative;
+        }
+
+        .footer-actions::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--destaque), transparent);
+        }
+
+        .btn {
+            padding: 18px 40px;
+            border-radius: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            font-size: 14.5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            min-width: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.7s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primaria), var(--secundaria));
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 33, 87, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 33, 87, 0.4);
+            filter: brightness(1.15);
+        }
+
+        .btn-ghost {
+            background: #f0f2f5;
+            color: #555;
+            border: 2px solid #e0e5eb;
+        }
+
+        .btn-ghost:hover {
+            background: #e4e7eb;
+            color: #222;
+            border-color: #d1d9e0;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #c62828, #d32f2f);
+            color: white;
+            box-shadow: 0 8px 20px rgba(198, 40, 40, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(198, 40, 40, 0.4);
+            filter: brightness(1.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* --- LOADER --- */
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-bottom-color: white;
+            border-radius: 50%;
+            display: none;
+            animation: rotation 0.8s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .overlay-processamento {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .overlay-processamento .loader {
+            display: block;
+            border-color: var(--primaria);
+            border-bottom-color: transparent;
+            width: 50px;
+            height: 50px;
+            border-width: 4px;
+            margin-bottom: 20px;
+        }
+
+        .overlay-texto {
+            margin-top: 20px;
+            font-weight: 800;
+            color: var(--primaria);
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        /* --- FOOTER SIDEBAR --- */
+        .sidebar-footer {
+            padding: 30px 25px;
+            font-size: 11.5px;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            letter-spacing: 0.8px;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- EFEITO DE FOCO NOS CAMPOS --- */
+        .field-group:focus-within label {
+            color: var(--primaria);
+        }
+
+        .field-group:focus-within label::before {
+            color: var(--primaria);
+            transform: scale(1.3);
+            transition: transform 0.2s;
+        }
+
+        /* --- CAMPOS OBRIGATÓRIOS --- */
+        .required::after {
+            content: ' *';
+            color: var(--erro);
+            font-weight: bold;
+        }
+
+        /* --- REGRAS DO SISTEMA --- */
+        .regras-container {
+            grid-column: span 2;
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 5px solid var(--primaria);
+        }
+
+        .regras-container h3 {
+            color: var(--primaria);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .regras-container h3::before {
+            content: '⚖️';
+            font-size: 18px;
+        }
+
+        .regras-lista {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .regras-lista li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 13.5px;
+            color: #555;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .regras-lista li:last-child {
+            border-bottom: none;
+        }
+
+        .regras-lista li::before {
+            content: '•';
+            color: var(--destaque);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* --- TAGS PARA DENÚNCIA --- */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tag-option {
+            background: #f0f2f5;
+            border: 2px solid #e0e5eb;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tag-option:hover {
+            background: #e4e7eb;
+        }
+
+        .tag-option.selected {
+            background: var(--primaria);
+            color: white;
+            border-color: var(--primaria);
+        }
+
+        /* --- PRIORIDADE --- */
+        .prioridade-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .prioridade-option {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border: 2px solid #e0e5eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .prioridade-option:hover {
+            background: #f8f9fa;
+        }
+
+        .prioridade-option.selected {
+            border-color: var(--erro);
+            background: #fff5f5;
+        }
+
+        .prioridade-option.media {
+            border-color: var(--alerta);
+            background: #fff9e6;
+        }
+
+        .prioridade-option.baixa {
+            border-color: var(--sucesso);
+            background: #f0f9f0;
+        }
+    </style>
+</head>
+<body>
+
+    <img src="https://normasinternet2.receita.fazenda.gov.br/assets/img/logo-rfb.png" class="watermark-rfb" alt="Logo Receita Federal Fundo">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://i.imgur.com/wJKy1zC.png" alt="Marcone Logo">
+        </div>
+        <nav class="nav-group">
+            <div class="nav-item active" onclick="trocarAba(this, 'aba-declaracao')">📋 Nova Declaração IRPF</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-cnpj')">🏢 Abertura de CNPJ</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-manifesto')">🚛 Manifesto de Carga</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-denuncia')">🚨 Denúncia Anônima</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-transparencia')">📊 Transparência Fiscal</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-minhas')">📁 Minhas Declarações</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-pendencias')">⚖️ Pendências Fiscais</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-cadastro')">👤 Cadastro Municipal</div>
+            <div class="nav-item" onclick="trocarAba(this, 'aba-certidao')">📄 Gerar Certidão Negativa</div>
+        </nav>
+        <div class="sidebar-footer">
+            © 2025 MARCONE ROLEPLAY <br> 
+            <span style="opacity: 0.8; font-weight: 600;">GOVERNO FEDERAL</span><br>
+            <span style="font-size: 10px; opacity: 0.6;">Sistema Integrado de Assuntos Fiscais</span>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Gov.br_logo.svg/2560px-Gov.br_logo.svg.png" height="42" alt="Gov.br">
+                <img src="https://normasinternet2.receita.fazenda.gov.br/assets/img/logo-rfb.png" height="52" style="filter: brightness(0) saturate(100%) invert(10%) sepia(50%) saturate(3000%) hue-rotate(200deg);" alt="Receita Federal">
+            </div>
+            <img src="https://i.imgur.com/VdhoW60.png" height="115" alt="União e Reconstrução" style="transition: transform 0.4s ease;">
+        </header>
+
+        <div class="system-status">
+            <div class="status-dot"></div> 
+            <span>Conexão Criptografada via SSL-RF</span>
+        </div>
+
+        <main id="aba-declaracao" class="content-area active">
+            <div class="page-title">
+                <h1>Declaração de Imposto de Renda</h1>
+                <p>Sistema de Apuração Patrimonial — Marcone Roleplay</p>
+            </div>
+
+            <section class="form-card" id="cardDeclaracao">
+                <div class="overlay-processamento" id="overlayFisco">
+                    <div class="loader"></div>
+                    <div class="overlay-texto">Validando informações junto à base de dados de Marcone...</div>
+                </div>
+
+                <form class="form-grid" id="formFiscal" onsubmit="return validarDeclaracao(event)">
+                    <div class="section-label">Identificação Básica</div>
+                    <div class="field-group">
+                        <label class="required">Nome do Cidadão</label>
+                        <input type="text" id="nomeCidadao" placeholder="Nome Completo" required>
+                        <div class="error-message" id="errorNome">Nome completo é obrigatório</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Registro Geral (RG)</label>
+                        <input type="text" id="rgCidadao" placeholder="00.000.000-0" required>
+                        <div class="error-message" id="errorRG">Informe seu RG</div>
+                    </div>
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="required">Ocupação no Servidor</label>
+                        <input type="text" id="ocupacao" placeholder="Ex: Diretor de Empresa, Policial, Médico..." required>
+                        <div class="error-message" id="errorOcupacao">Informe sua ocupação</div>
+                    </div>
+
+                    <div class="section-label">Patrimônio e Rendimentos</div>
+                    <div class="field-group">
+                        <label class="required">Salário / Renda Mensal (R$)</label>
+                        <input type="number" id="rendaMensal" placeholder="Digite o valor" required min="0" step="0.01">
+                        <div class="error-message" id="errorRenda">Informe um valor válido</div>
+                    </div>
+                    <div class="field-group">
+                        <label>Frota de Veículos (Qtd)</label>
+                        <input type="number" id="frotaVeiculos" value="0" min="0">
+                    </div>
+                    <div class="field-group">
+                        <label>Aeronaves</label>
+                        <select id="aeronaves" required>
+                            <option value="">Selecione uma opção</option>
+                            <option value="Não Possuo">Não Possuo</option>
+                            <option value="Sim">Sim (Homologada ANAC-RP)</option>
+                        </select>
+                        <div class="error-message" id="errorAeronaves">Selecione uma opção</div>
+                    </div>
+                    <div class="field-group">
+                        <label>Embarcações</label>
+                        <select id="embarcacoes" required>
+                            <option value="">Selecione uma opção</option>
+                            <option value="Não Possuo">Não Possuo</option>
+                            <option value="Sim">Sim (Registrada Marinha-RP)</option>
+                        </select>
+                        <div class="error-message" id="errorEmbarcacoes">Selecione uma opção</div>
+                    </div>
+
+                    <div class="regras-container">
+                        <h3>Regras para Declaração</h3>
+                        <ul class="regras-lista">
+                            <li>Todos os campos marcados com * são obrigatórios</li>
+                            <li>Informações falsas podem gerar multas de até R$ 50.000,00</li>
+                            <li>Declaração deve ser atualizada a cada 6 meses</li>
+                            <li>Valores devem ser informados em Reais (R$)</li>
+                            <li>O sistema registra automaticamente a data e hora do envio</li>
+                        </ul>
+                    </div>
+
+                    <label class="termos-container">
+                        <input type="checkbox" id="checkVeracidade" required>
+                        <span class="termos-texto">Declaro, sob as penas da lei, que as informações aqui prestadas são verdadeiras e condizentes com meu patrimônio no município de Marcone.</span>
+                    </label>
+                    <div class="error-message" id="errorTermos" style="grid-column: span 2;">Você deve aceitar os termos para continuar</div>
+
+                    <div class="form-message" id="messageDeclaracao"></div>
+
+                    <div class="footer-actions" style="grid-column: span 2;">
+                        <button type="reset" class="btn btn-ghost" onclick="limparErros()">Limpar Campos</button>
+                        <button type="submit" class="btn btn-primary" id="btnTransmitir">
+                            <span id="labelBotao">Transmitir Dados</span>
+                            <div class="loader" id="loaderBotao"></div>
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <main id="aba-cnpj" class="content-area">
+            <div class="page-title">
+                <h1>Solicitação de Abertura de CNPJ</h1>
+                <p>Formalização de Atividade Econômica — Marcone Roleplay</p>
+            </div>
+
+            <section class="form-card">
+                <form class="form-grid" id="formCNPJ" onsubmit="return validarCNPJ(event)">
+                    <div class="section-label">Dados do Solicitante</div>
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="required">Nome Completo</label>
+                        <input type="text" id="nomeSolicitante" placeholder="Responsável Legal" required>
+                        <div class="error-message" id="errorSolicitante">Nome é obrigatório</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">RG</label>
+                        <input type="text" id="rgSolicitante" placeholder="00.000.000-0" required>
+                        <div class="error-message" id="errorRGSolicitante">RG é obrigatório</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Contato</label>
+                        <input type="text" id="contatoSolicitante" placeholder="(00) 00000-0000" required>
+                        <div class="error-message" id="errorContato">Informe um contato</div>
+                    </div>
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="required">Nome da Empresa</label>
+                        <input type="text" id="nomeEmpresa" placeholder="Razão Social / Nome Fantasia" required>
+                        <div class="error-message" id="errorEmpresa">Nome da empresa é obrigatório</div>
+                    </div>
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="required">Endereço</label>
+                        <input type="text" id="enderecoEmpresa" placeholder="Localização do Estabelecimento" required>
+                        <div class="error-message" id="errorEndereco">Endereço é obrigatório</div>
+                    </div>
+
+                    <div class="section-label">Dados da Empresa</div>
+                    <div class="field-group">
+                        <label class="required">Natureza Jurídica</label>
+                        <select id="selectNatureza" onchange="verificarNatureza()" required>
+                            <option value="">Selecione uma opção</option>
+                            <option value="Empresa individual">Empresa individual</option>
+                            <option value="Sociedade limitada">Sociedade limitada</option>
+                        </select>
+                        <div class="error-message" id="errorNatureza">Selecione a natureza jurídica</div>
+                    </div>
+                    <div class="field-group">
+                        <label>Associados</label>
+                        <input type="text" id="inputAssociados" placeholder="Nomes dos Sócios">
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Porte da Empresa</label>
+                        <select id="porteEmpresa" required>
+                            <option value="">Selecione</option>
+                            <option value="Pequeno">Pequeno</option>
+                            <option value="Médio">Médio</option>
+                            <option value="Grande">Grande</option>
+                        </select>
+                        <div class="error-message" id="errorPorte">Selecione o porte da empresa</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Possui AVCB?</label>
+                        <select id="avcb" required>
+                            <option value="">Selecione uma opção</option>
+                            <option value="Sim">Sim</option>
+                            <option value="Não">Não</option>
+                        </select>
+                        <div class="error-message" id="errorAVCB">Informe se possui AVCB</div>
+                    </div>
+
+                    <div class="regras-container">
+                        <h3>Regras para Abertura de CNPJ</h3>
+                        <ul class="regras-lista">
+                            <li>AVCB é obrigatório para funcionamento em Marcone</li>
+                            <li>Empresas individuais não podem ter sócios</li>
+                            <li>Processo leva até 72 horas para análise</li>
+                            <li>Documentação complementar pode ser solicitada</li>
+                            <li>Taxa de registro: R$ 250,00 para empresas médias e grandes</li>
+                        </ul>
+                    </div>
+
+                    <label class="termos-container">
+                        <input type="checkbox" id="checkCienciaAVCB" required>
+                        <span class="termos-texto">Estou ciente de que o AVCB é obrigatório para o funcionamento em Marcone.</span>
+                    </label>
+                    <div class="error-message" id="errorTermosCNPJ">Aceite os termos para continuar</div>
+
+                    <div class="form-message" id="messageCNPJ"></div>
+
+                    <div class="footer-actions" style="grid-column: span 2;">
+                        <button type="reset" class="btn btn-ghost" onclick="resetarCNPJ(); limparErrosCNPJ()">Limpar Campos</button>
+                        <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <main id="aba-manifesto" class="content-area">
+            <div class="page-title">
+                <h1>Documento de Manifesto de Carga</h1>
+                <p>Controle de Transporte de Mercadorias — Marcone Roleplay</p>
+            </div>
+
+            <section class="form-card">
+                <form class="form-grid" onsubmit="return validarManifesto(event)">
+                    <div class="section-label">Dados da Carga</div>
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="required">Material Transportado</label>
+                        <input type="text" id="materialCarga" placeholder="Ex: Cimento, Eletrônicos..." required>
+                        <div class="error-message">Informe o material transportado</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Quantidade</label>
+                        <input type="text" id="quantidadeCarga" placeholder="Ex: 50 unidades" required>
+                        <div class="error-message">Informe a quantidade</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Peso Estimado</label>
+                        <input type="text" id="pesoCarga" placeholder="Ex: 500kg" required>
+                        <div class="error-message">Informe o peso estimado</div>
+                    </div>
+                    <div class="section-label">Dados Logísticos</div>
+                    <div class="field-group">
+                        <label class="required">Veículo (Modelo)</label>
+                        <input type="text" id="modeloVeiculo" placeholder="Ex: Benson" required>
+                        <div class="error-message">Informe o modelo do veículo</div>
+                    </div>
+                    <div class="field-group">
+                        <label class="required">Placa</label>
+                        <input type="text" id="placaVeiculo" placeholder="ABC1D23" required>
+                        <div class="error-message">Informe a placa do veículo</div>
+                    </div>
+
+                    <div class="regras-container">
+                        <h3>Regras para Manifesto de Carga</h3>
+                        <ul class="regras-lista">
+                            <li>Documento válido por 24 horas após emissão</li>
+                            <li>Cargas suspeitas serão fiscalizadas</li>
+                            <li>Placa deve estar no formato correto</li>
+                            <li>Manifesto deve ser impresso e levado no veículo</li>
+                            <li>Multa por transporte irregular: R$ 5.000,00</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-message" id="messageManifesto"></div>
+
+                    <div class="footer-actions" style="grid-column: span 2;">
+                        <button type="submit" class="btn btn-primary">Gerar Documento</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <main id="aba-denuncia" class="content-area">
+            <div class="page-title">
+                <h1>Canal de Denúncia Anônima</h1>
+                <p>Combate à Sonegação — Marcone Roleplay</p>
+            </div>
+            <section class="form-card">
+                <form class="form-grid" onsubmit="return validarDenuncia(event)">
+                    <div class="section-label">Identificação do Caso</div>
+                    
+                    <div class="field-group">
+                        <label class="required">Tipo de Irregularidade</label>
+                        <select id="tipoIrregularidade" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="Sonegação Fiscal">Sonegação Fiscal</option>
+                            <option value="Lavagem de Dinheiro">Lavagem de Dinheiro</option>
+                            <option value="Trabalho Informal">Trabalho Informal</option>
+                            <option value="Contrabando">Contrabando</option>
+                            <option value="Falsificação">Falsificação de Documentos</option>
+                            <option value="Corrupção">Corrupção</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                        <div class="error-message">Selecione o tipo de irregularidade</div>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="required">Gravidade</label>
+                        <div class="prioridade-container">
+                            <div class="prioridade-option baixa" onclick="selecionarPrioridade(this, 'baixa')">
+                                <div style="font-weight: bold;">Baixa</div>
+                                <div style="font-size: 11px;">Infração leve</div>
+                            </div>
+                            <div class="prioridade-option media" onclick="selecionarPrioridade(this, 'media')">
+                                <div style="font-weight: bold;">Média</div>
+                                <div style="font-size: 11px;">Infração moderada</div>
+                            </div>
+                            <div class="prioridade-option" onclick="selecionarPrioridade(this, 'alta')">
+                                <div style="font-weight: bold;">Alta</div>
+                                <div style="font-size: 11px;">Infração grave</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="prioridadeDenuncia" required>
+                        <div class="error-message">Selecione a gravidade</div>
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label>Local da Ocorrência</label>
+                        <input type="text" id="localOcorrencia" placeholder="Endereço ou ponto de referência">
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label>Envolvidos (opcional)</label>
+                        <input type="text" id="envolvidos" placeholder="Nomes ou descrições das pessoas/empresas">
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label>Período da Irregularidade</label>
+                        <div style="display: flex; gap: 15px;">
+                            <input type="date" id="dataInicio" style="flex: 1;">
+                            <input type="date" id="dataFim" style="flex: 1;">
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">Data início e fim (opcional)</div>
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label>Tags Relacionadas</label>
+                        <div class="tags-container">
+                            <div class="tag-option" onclick="selecionarTag(this)">Sonegação</div>
+                            <div class="tag-option" onclick="selecionarTag(this)">Documentos Falsos</div>
+                            <div class="tag-option" onclick="selecionarTag(this)">Caixa 2</div>
+                            <div class="tag-option" onclick="selecionarTag(this)">Comércio Irregular</div>
+                            <div class="tag-option" onclick="selecionarTag(this)">Serviço Informal</div>
+                            <div class="tag-option" onclick="selecionarTag(this)">Tráfico de Influência</div>
+                        </div>
+                        <input type="hidden" id="tagsDenuncia">
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="required">Descrição Detalhada dos Fatos</label>
+                        <textarea id="descricaoDenuncia" placeholder="Forneça detalhes, datas, valores envolvidos, nomes, provas disponíveis..." required minlength="50"></textarea>
+                        <div class="error-message">Descreva com detalhes (mínimo 50 caracteres)</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                            Caracteres: <span id="contadorCaracteres">0</span>/1000
+                        </div>
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label>Evidências ou Provas (opcional)</label>
+                        <textarea id="evidencias" placeholder="Descreva qualquer evidência disponível (fotos, documentos, testemunhas)"></textarea>
+                    </div>
+                    
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label>Contato para Esclarecimentos (opcional)</label>
+                        <input type="text" id="contatoDenuncia" placeholder="Email ou telefone (mantido em sigilo)">
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">Sua identidade será preservada</div>
+                    </div>
+
+                    <div class="regras-container">
+                        <h3>Informações sobre Denúncias</h3>
+                        <ul class="regras-lista">
+                            <li>Denúncias são 100% anônimas</li>
+                            <li>Informações falsas podem constituir crime</li>
+                            <li>Processo de análise: 5-10 dias úteis</li>
+                            <li>Denúncias graves são priorizadas</li>
+                            <li>Recompensa para denúncias que resultem em recuperação fiscal</li>
+                            <li>Sigilo absoluto garantido por lei</li>
+                        </ul>
+                    </div>
+                    
+                    <label class="termos-container">
+                        <input type="checkbox" id="checkVeracidadeDenuncia" required>
+                        <span class="termos-texto">Declaro que as informações são verdadeiras e que não estou fazendo denúncia por má-fé ou motivação pessoal.</span>
+                    </label>
+                    <div class="error-message" id="errorTermosDenuncia">Aceite os termos para enviar a denúncia</div>
+
+                    <div class="form-message" id="messageDenuncia"></div>
+
+                    <div class="footer-actions" style="grid-column: span 2;">
+                        <button type="reset" class="btn btn-ghost" onclick="limparDenuncia()">Limpar Formulário</button>
+                        <button type="submit" class="btn btn-danger">Enviar Denúncia Anônima</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <main id="aba-transparencia" class="content-area">
+            <div class="page-title">
+                <h1>Transparência Fiscal de Marcone</h1>
+                <p>Acompanhamento de Arrecadação em Tempo Real</p>
+            </div>
+            
+            <section class="form-card">
+                <!-- IMPOSTÔMETRO PRINCIPAL -->
+                <div class="impostometro-container">
+                    <div style="font-size: 15px; color: #888; margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase;">Total Arrecadado no Ano Fiscal 2025</div>
+                    <div class="impostometro-valor" id="impostometro">R$ 1.250.480,00</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 15px; letter-spacing: 1px;">
+                        Atualizado em tempo real • Última atualização: <span id="horaAtualizacao">--:--:--</span>
+                    </div>
+                </div>
+
+                <!-- ESTATÍSTICAS DETALHADAS -->
+                <div class="section-label">Estatísticas Fiscais Detalhadas</div>
+                
+                <div class="stats-grid">
+                    <!-- Arrecadação Diária -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #28a745, #20c997);">💰</div>
+                            <div class="stat-title">Arrecadação Diária</div>
+                        </div>
+                        <div class="stat-value" id="arrecadacaoDiaria">R$ 42.580,00</div>
+                        <div class="stat-trend trend-up">
+                            <span>↑ 8.2%</span> vs ontem
+                        </div>
+                        <div class="stat-detail">
+                            Média diária deste mês: R$ 38.450,00
+                        </div>
+                    </div>
+
+                    <!-- Impostos Recolhidos -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #002157, #003366);">🏛️</div>
+                            <div class="stat-title">Impostos Recolhidos</div>
+                        </div>
+                        <div class="stat-value" id="impostosRecolhidos">15.842</div>
+                        <div class="stat-trend trend-neutral">
+                            <span>→ 0.5%</span> vs mês anterior
+                        </div>
+                        <div class="stat-detail">
+                            Declarações processadas este mês
+                        </div>
+                    </div>
+
+                    <!-- Taxa de Conformidade -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">📊</div>
+                            <div class="stat-title">Taxa de Conformidade</div>
+                        </div>
+                        <div class="stat-value" id="taxaConformidade">94,7%</div>
+                        <div class="stat-trend trend-up">
+                            <span>↑ 2.1%</span> vs trimestre anterior
+                        </div>
+                        <div class="stat-detail">
+                            5.3% de pendências em análise
+                        </div>
+                    </div>
+
+                    <!-- Multas Aplicadas -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #dc3545, #c62828);">⚖️</div>
+                            <div class="stat-title">Multas Aplicadas</div>
+                        </div>
+                        <div class="stat-value" id="multasAplicadas">R$ 125.300,00</div>
+                        <div class="stat-trend trend-down">
+                            <span>↓ 15.3%</span> vs mês anterior
+                        </div>
+                        <div class="stat-detail">
+                            Redução de infrações fiscais
+                        </div>
+                    </div>
+
+                    <!-- Novos CNPJs -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #6f42c1, #9c27b0);">🏢</div>
+                            <div class="stat-title">Novos CNPJs</div>
+                        </div>
+                        <div class="stat-value" id="novosCnpjs">247</div>
+                        <div class="stat-trend trend-up">
+                            <span>↑ 12.5%</span> vs trimestre
+                        </div>
+                        <div class="stat-detail">
+                            Empresas formalizadas este ano
+                        </div>
+                    </div>
+
+                    <!-- Denúncias Processadas -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #17a2b8, #0dcaf0);">🚨</div>
+                            <div class="stat-title">Denúncias Processadas</div>
+                        </div>
+                        <div class="stat-value" id="denunciasProcessadas">1.842</div>
+                        <div class="stat-trend trend-up">
+                            <span>↑ 5.8%</span> vs ano anterior
+                        </div>
+                        <div class="stat-detail">
+                            78% resultaram em ações fiscais
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRÁFICO DE ARRECADAÇÃO MENSAL -->
+                <div class="grafico-container">
+                    <div style="font-size: 16px; font-weight: 700; color: var(--primaria); margin-bottom: 10px;">
+                        Arrecadação Mensal - 2025
+                    </div>
+                    <div style="font-size: 13px; color: #666; margin-bottom: 20px;">
+                        Comparativo mensal de arrecadação (em milhares de R$)
+                    </div>
+                    
+                    <div class="grafico-barras">
+                        <div class="barra" style="height: 60%;" data-valor="45.8">
+                            <div class="barra-valor">45,8K</div>
+                            <div class="barra-label">JAN</div>
+                        </div>
+                        <div class="barra" style="height: 75%;" data-valor="57.2">
+                            <div class="barra-valor">57,2K</div>
+                            <div class="barra-label">FEV</div>
+                        </div>
+                        <div class="barra" style="height: 82%;" data-valor="62.5">
+                            <div class="barra-valor">62,5K</div>
+                            <div class="barra-label">MAR</div>
+                        </div>
+                        <div class="barra" style="height: 90%;" data-valor="68.7">
+                            <div class="barra-valor">68,7K</div>
+                            <div class="barra-label">ABR</div>
+                        </div>
+                        <div class="barra" style="height: 95%;" data-valor="72.4">
+                            <div class="barra-valor">72,4K</div>
+                            <div class="barra-label">MAI</div>
+                        </div>
+                        <div class="barra" style="height: 100%;" data-valor="76.2">
+                            <div class="barra-valor">76,2K</div>
+                            <div class="barra-label">JUN</div>
+                        </div>
+                    </div>
+
+                    <div class="legenda-container">
+                        <div class="legenda-item">
+                            <div class="legenda-cor" style="background: linear-gradient(to top, var(--primaria), var(--secundaria));"></div>
+                            <span>Arrecadação Mensal</span>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="legenda-cor" style="background: #28a745;"></div>
+                            <span>Meta Atingida</span>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="legenda-cor" style="background: #ffc107;"></div>
+                            <span>Abaixo da Meta</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DISTRIBUIÇÃO DETALHADA DOS RECURSOS -->
+                <div class="section-label" style="margin-top: 40px;">Distribuição Detalhada dos Recursos Arrecadados</div>
+                
+                <div class="distribuicao-grid">
+                    <!-- Segurança Pública -->
+                    <div class="distribuicao-card" style="border-color: #28a745;">
+                        <div class="distribuicao-header">
+                            <div class="distribuicao-titulo">Segurança Pública</div>
+                            <div class="distribuicao-porcentagem" style="color: #28a745;">35%</div>
+                        </div>
+                        <div class="distribuicao-valor">R$ 437.668,00</div>
+                        <ul class="distribuicao-lista">
+                            <li><span>Policiamento</span><span>R$ 262.600,80</span></li>
+                            <li><span>Equipamentos</span><span>R$ 87.533,60</span></li>
+                            <li><span>Treinamento</span><span>R$ 43.766,80</span></li>
+                            <li><span>Infraestrutura</span><span>R$ 43.766,80</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Infraestrutura -->
+                    <div class="distribuicao-card" style="border-color: #c5a059;">
+                        <div class="distribuicao-header">
+                            <div class="distribuicao-titulo">Infraestrutura</div>
+                            <div class="distribuicao-porcentagem" style="color: #c5a059;">25%</div>
+                        </div>
+                        <div class="distribuicao-valor">R$ 312.620,00</div>
+                        <ul class="distribuicao-lista">
+                            <li><span>Manutenção de Vias</span><span>R$ 156.310,00</span></li>
+                            <li><span>Iluminação Pública</span><span>R$ 62.524,00</span></li>
+                            <li><span>Sinalização</span><span>R$ 46.893,00</span></li>
+                            <li><span>Novos Projetos</span><span>R$ 46.893,00</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Saúde -->
+                    <div class="distribuicao-card" style="border-color: #dc3545;">
+                        <div class="distribuicao-header">
+                            <div class="distribuicao-titulo">Saúde Pública</div>
+                            <div class="distribuicao-porcentagem" style="color: #dc3545;">20%</div>
+                        </div>
+                        <div class="distribuicao-valor">R$ 250.096,00</div>
+                        <ul class="distribuicao-lista">
+                            <li><span>Medicamentos</span><span>R$ 100.038,40</span></li>
+                            <li><span>Equipamentos</span><span>R$ 75.028,80</span></li>
+                            <li><span>Manutenção</span><span>R$ 50.019,20</span></li>
+                            <li><span>Profissionais</span><span>R$ 25.009,60</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Educação -->
+                    <div class="distribuicao-card" style="border-color: #17a2b8;">
+                        <div class="distribuicao-header">
+                            <div class="distribuicao-titulo">Educação</div>
+                            <div class="distribuicao-porcentagem" style="color: #17a2b8;">15%</div>
+                        </div>
+                        <div class="distribuicao-valor">R$ 187.572,00</div>
+                        <ul class="distribuicao-lista">
+                            <li><span>Material Escolar</span><span>R$ 75.028,80</span></li>
+                            <li><span>Merenda</span><span>R$ 56.271,60</span></li>
+                            <li><span>Manutenção</span><span>R$ 37.514,40</span></li>
+                            <li><span>Capacitação</span><span>R$ 18.757,20</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Administração -->
+                    <div class="distribuicao-card" style="border-color: #6f42c1;">
+                        <div class="distribuicao-header">
+                            <div class="distribuicao-titulo">Administração</div>
+                            <div class="distribuicao-porcentagem" style="color: #6f42c1;">5%</div>
+                        </div>
+                        <div class="distribuicao-valor">R$ 62.524,00</div>
+                        <ul class="distribuicao-lista">
+                            <li><span>Salários</span><span>R$ 37.514,40</span></li>
+                            <li><span>Tecnologia</span><span>R$ 12.504,80</span></li>
+                            <li><span>Manutenção</span><span>R$ 6.252,40</span></li>
+                            <li><span>Outros</span><span>R$ 6.252,40</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- INFORMAÇÕES ADICIONAIS -->
+                <div class="regras-container" style="margin-top: 40px;">
+                    <h3>Informações Técnicas da Arrecadação</h3>
+                    <ul class="regras-lista">
+                        <li><strong>Período Fiscal:</strong> Janeiro a Junho de 2025</li>
+                        <li><strong>Meta Anual:</strong> R$ 2.800.000,00 (70% atingida)</li>
+                        <li><strong>Crescimento vs 2024:</strong> +18,3% no mesmo período</li>
+                        <li><strong>Principal Fonte:</strong> Imposto sobre Serviços (42%)</li>
+                        <li><strong>Maior Contribuinte:</strong> Setor de Serviços (58%)</li>
+                        <li><strong>Eficiência na Cobrança:</strong> 96,2% dos tributos devidos</li>
+                        <li><strong>Próxima Auditoria:</strong> Julho/2025 - Setor Comercial</li>
+                    </ul>
+                </div>
+
+                <div class="footer-actions" style="margin-top: 30px; justify-content: center;">
+                    <button type="button" class="btn btn-ghost" onclick="exportarDados()">
+                        📥 Exportar Relatório Completo
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="atualizarEstatisticas()">
+                        🔄 Atualizar Estatísticas
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <main id="aba-minhas" class="content-area"><div class="page-title"><h1>Minhas Declarações</h1></div></main>
+        <main id="aba-pendencias" class="content-area"><div class="page-title"><h1>Pendências Fiscais</h1></div></main>
+        <main id="aba-cadastro" class="content-area"><div class="page-title"><h1>Cadastro Municipal</h1></div></main>
+        <main id="aba-certidao" class="content-area"><div class="page-title"><h1>Gerar Certidão Negativa</h1></div></main>
+    </div>
+
+    <audio id="somSucesso" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        let valorArrecadado = 1250480.00;
+        let prioridadeSelecionada = null;
+        let tagsSelecionadas = [];
+
+        function atualizarImpostometro() {
+            valorArrecadado += Math.random() * 0.8;
+            const el = document.getElementById('impostometro');
+            if(el) el.innerText = 'R$ ' + valorArrecadado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // Atualizar hora da última atualização
+            const agora = new Date();
+            const horaFormatada = agora.toLocaleTimeString('pt-BR');
+            document.getElementById('horaAtualizacao').textContent = horaFormatada;
+            
+            // Atualizar estatísticas relacionadas
+            atualizarEstatisticasSecundarias();
+        }
+        
+        function atualizarEstatisticasSecundarias() {
+            // Simular variação nas estatísticas secundárias
+            const variacao = (Math.random() - 0.5) * 0.1; // ±5%
+            
+            // Arrecadação diária (baseada no imposto principal)
+            const arrecadacaoDiaria = valorArrecadado / 30;
+            document.getElementById('arrecadacaoDiaria').textContent = 
+                'R$ ' + Math.round(arrecadacaoDiaria).toLocaleString('pt-BR');
+            
+            // Impostos recolhidos (proporcional)
+            const impostosRecolhidos = Math.floor(15000 + (valorArrecadado / 100));
+            document.getElementById('impostosRecolhidos').textContent = 
+                impostosRecolhidos.toLocaleString('pt-BR');
+            
+            // Taxa de conformidade (com variação leve)
+            const taxaBase = 94.7;
+            const taxaAtual = taxaBase + (Math.random() * 0.6 - 0.3);
+            document.getElementById('taxaConformidade').textContent = 
+                taxaAtual.toFixed(1) + '%';
+            
+            // Multas aplicadas (inversamente proporcional à conformidade)
+            const multasBase = 125300;
+            const multasAtual = multasBase * (1 - (taxaAtual - taxaBase) / 100);
+            document.getElementById('multasAplicadas').textContent = 
+                'R$ ' + Math.round(multasAtual).toLocaleString('pt-BR');
+            
+            // Novos CNPJs (crescimento constante)
+            const cnpjsBase = 247;
+            const crescimento = Math.floor(Math.random() * 5);
+            document.getElementById('novosCnpjs').textContent = 
+                (cnpjsBase + crescimento).toLocaleString('pt-BR');
+            
+            // Denúncias processadas
+            const denunciasBase = 1842;
+            const denunciasAtual = denunciasBase + Math.floor(Math.random() * 10);
+            document.getElementById('denunciasProcessadas').textContent = 
+                denunciasAtual.toLocaleString('pt-BR');
+        }
+        
+        setInterval(atualizarImpostometro, 5000); // Atualiza a cada 5 segundos
+
+        // Inicializar hora atual
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarImpostometro();
+        });
+
+        function trocarAba(elemento, idAba) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            elemento.classList.add('active');
+            document.querySelectorAll('.content-area').forEach(area => area.classList.remove('active'));
+            const aba = document.getElementById(idAba);
+            if(aba) {
+                aba.classList.add('active');
+                const titulo = aba.querySelector('h1');
+                if(titulo) {
+                    titulo.style.transform = 'scale(1.02)';
+                    setTimeout(() => titulo.style.transform = 'scale(1)', 300);
+                }
+            }
+        }
+
+        function verificarNatureza() {
+            const select = document.getElementById('selectNatureza');
+            const input = document.getElementById('inputAssociados');
+            if (select.value === "Empresa individual") {
+                input.value = "Não aplicável";
+                input.disabled = true;
+                input.style.background = '#f5f5f5';
+                input.style.color = '#999';
+            } else {
+                input.value = "";
+                input.disabled = false;
+                input.style.background = '#fdfdfe';
+                input.style.color = '#333';
+            }
+        }
+
+        function resetarCNPJ() { 
+            const input = document.getElementById('inputAssociados');
+            input.disabled = false;
+            input.style.background = '#fdfdfe';
+            input.style.color = '#333';
+        }
+
+        // ===== FUNÇÕES DE VALIDAÇÃO =====
+        function mostrarErro(elemento, mensagem) {
+            elemento.classList.add('input-error');
+            const errorDiv = elemento.parentElement.querySelector('.error-message');
+            if (errorDiv) {
+                errorDiv.textContent = mensagem;
+                errorDiv.style.display = 'flex';
+            }
+        }
+
+        function limparErro(elemento) {
+            elemento.classList.remove('input-error');
+            const errorDiv = elemento.parentElement.querySelector('.error-message');
+            if (errorDiv) errorDiv.style.display = 'none';
+        }
+
+        function limparErros() {
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.form-message').forEach(el => el.style.display = 'none');
+        }
+
+        function limparErrosCNPJ() {
+            const form = document.getElementById('formCNPJ');
+            form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            form.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            const message = document.getElementById('messageCNPJ');
+            if (message) message.style.display = 'none';
+        }
+
+        // Validação Declaração IRPF - CORRIGIDA
+        function validarDeclaracao(event) {
+            event.preventDefault();
+            limparErros();
+            
+            let isValid = true;
+            
+            // Validação simplificada - apenas verifica se campos obrigatórios estão preenchidos
+            const camposObrigatorios = [
+                { id: 'nomeCidadao', nome: 'Nome' },
+                { id: 'rgCidadao', nome: 'RG' },
+                { id: 'ocupacao', nome: 'Ocupação' },
+                { id: 'rendaMensal', nome: 'Renda' },
+                { id: 'aeronaves', nome: 'Aeronaves' },
+                { id: 'embarcacoes', nome: 'Embarcações' }
+            ];
+            
+            camposObrigatorios.forEach(campo => {
+                const elemento = document.getElementById(campo.id);
+                // Verifica se é string vazia ou select não selecionado
+                if ((elemento.type === 'select-one' && elemento.value === '') || 
+                    (elemento.value === '' || elemento.value === null || elemento.value === undefined)) {
+                    mostrarErro(elemento, `${campo.nome} é obrigatório`);
+                    isValid = false;
+                }
+            });
+            
+            // Validação do checkbox de termos
+            const checkTermos = document.getElementById('checkVeracidade');
+            if (!checkTermos.checked) {
+                const errorTermos = document.getElementById('errorTermos');
+                errorTermos.style.display = 'flex';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                transmitirDados();
+            } else {
+                const message = document.getElementById('messageDeclaracao');
+                message.className = 'form-message error';
+                message.textContent = 'Corrija os erros antes de transmitir';
+                message.style.display = 'block';
+                
+                // Scroll para o primeiro erro
+                const primeiroErro = document.querySelector('.input-error');
+                if (primeiroErro) {
+                    primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            
+            return false;
+        }
+
+        // Transmissão de dados (mantida original)
+        function transmitirDados() {
+            const label = document.getElementById('labelBotao');
+            const loader = document.getElementById('loaderBotao');
+            const overlay = document.getElementById('overlayFisco');
+            const som = document.getElementById('somSucesso');
+            const formCard = document.getElementById('cardDeclaracao');
+            const message = document.getElementById('messageDeclaracao');
+
+            label.style.display = 'none';
+            loader.style.display = 'block';
+            overlay.style.display = 'flex';
+            formCard.style.transform = 'scale(0.99)';
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                label.style.display = 'block';
+                loader.style.display = 'none';
+                formCard.style.transform = '';
+                
+                // Mensagem de sucesso
+                message.className = 'form-message success';
+                message.textContent = '✅ Declaração transmitida com sucesso! Protocolo: #' + Math.floor(Math.random() * 1000000);
+                message.style.display = 'block';
+                
+                // Efeito visual
+                formCard.style.boxShadow = '0 0 40px rgba(40, 167, 69, 0.4)';
+                setTimeout(() => formCard.style.boxShadow = '', 1000);
+                
+                if(som) som.play();
+                
+                // Scroll para mensagem
+                message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 2500);
+        }
+
+        // Validação CNPJ
+        function validarCNPJ(event) {
+            event.preventDefault();
+            limparErrosCNPJ();
+            
+            let isValid = true;
+            
+            const camposObrigatorios = [
+                { id: 'nomeSolicitante', nome: 'Nome do solicitante' },
+                { id: 'rgSolicitante', nome: 'RG' },
+                { id: 'contatoSolicitante', nome: 'Contato' },
+                { id: 'nomeEmpresa', nome: 'Nome da empresa' },
+                { id: 'enderecoEmpresa', nome: 'Endereço' },
+                { id: 'selectNatureza', nome: 'Natureza jurídica' },
+                { id: 'porteEmpresa', nome: 'Porte da empresa' },
+                { id: 'avcb', nome: 'AVCB' }
+            ];
+            
+            camposObrigatorios.forEach(campo => {
+                const elemento = document.getElementById(campo.id);
+                if (!elemento.value.trim()) {
+                    mostrarErro(elemento, `${campo.nome} é obrigatório`);
+                    isValid = false;
+                }
+            });
+            
+            // Validação do checkbox
+            const checkTermos = document.getElementById('checkCienciaAVCB');
+            if (!checkTermos.checked) {
+                const errorTermos = document.getElementById('errorTermosCNPJ');
+                errorTermos.style.display = 'flex';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                enviarSolicitacaoCNPJ();
+            } else {
+                const message = document.getElementById('messageCNPJ');
+                message.className = 'form-message error';
+                message.textContent = 'Corrija os erros antes de enviar';
+                message.style.display = 'block';
+            }
+            
+            return false;
+        }
+
+        function enviarSolicitacaoCNPJ() {
+            const message = document.getElementById('messageCNPJ');
+            message.className = 'form-message success';
+            message.textContent = '✅ Solicitação de CNPJ enviada! Protocolo: #' + Math.floor(Math.random() * 1000000);
+            message.style.display = 'block';
+            
+            // Scroll para mensagem
+            setTimeout(() => {
+                message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        // Validação Manifesto
+        function validarManifesto(event) {
+            event.preventDefault();
+            
+            let isValid = true;
+            const campos = ['materialCarga', 'quantidadeCarga', 'pesoCarga', 'modeloVeiculo', 'placaVeiculo'];
+            
+            campos.forEach(id => {
+                const elemento = document.getElementById(id);
+                if (!elemento.value.trim()) {
+                    mostrarErro(elemento, 'Campo obrigatório');
+                    isValid = false;
+                }
+            });
+            
+            if (isValid) {
+                const message = document.getElementById('messageManifesto');
+                message.className = 'form-message success';
+                message.textContent = '✅ Manifesto gerado com sucesso! Código: #M' + Math.floor(Math.random() * 10000);
+                message.style.display = 'block';
+                
+                // Scroll para mensagem
+                setTimeout(() => {
+                    message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+            
+            return false;
+        }
+
+        // ===== FUNÇÕES PARA DENÚNCIA ANÔNIMA =====
+        function selecionarPrioridade(elemento, prioridade) {
+            // Remove seleção anterior
+            document.querySelectorAll('.prioridade-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Adiciona seleção atual
+            elemento.classList.add('selected');
+            prioridadeSelecionada = prioridade;
+            document.getElementById('prioridadeDenuncia').value = prioridade;
+            
+            // Remove erro se existir
+            const errorDiv = elemento.parentElement.parentElement.querySelector('.error-message');
+            if (errorDiv) errorDiv.style.display = 'none';
+        }
+
+        function selecionarTag(elemento) {
+            elemento.classList.toggle('selected');
+            
+            // Atualiza array de tags
+            tagsSelecionadas = [];
+            document.querySelectorAll('.tag-option.selected').forEach(tag => {
+                tagsSelecionadas.push(tag.textContent);
+            });
+            
+            document.getElementById('tagsDenuncia').value = tagsSelecionadas.join(', ');
+        }
+
+        // Contador de caracteres para descrição
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('descricaoDenuncia');
+            const contador = document.getElementById('contadorCaracteres');
+            
+            if (textarea && contador) {
+                textarea.addEventListener('input', function() {
+                    contador.textContent = this.value.length;
+                    if (this.value.length < 50) {
+                        this.classList.add('input-error');
+                    } else {
+                        this.classList.remove('input-error');
+                        const errorDiv = this.parentElement.querySelector('.error-message');
+                        if (errorDiv) errorDiv.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        function limparDenuncia() {
+            // Limpa seleções
+            document.querySelectorAll('.prioridade-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelectorAll('.tag-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            prioridadeSelecionada = null;
+            tagsSelecionadas = [];
+            
+            // Limpa mensagens de erro
+            limparErros();
+        }
+
+        function validarDenuncia(event) {
+            event.preventDefault();
+            limparErros();
+            
+            let isValid = true;
+            
+            // Validação dos campos obrigatórios
+            const camposObrigatorios = [
+                { id: 'tipoIrregularidade', nome: 'Tipo de irregularidade' },
+                { id: 'descricaoDenuncia', nome: 'Descrição detalhada' }
+            ];
+            
+            camposObrigatorios.forEach(campo => {
+                const elemento = document.getElementById(campo.id);
+                if (!elemento.value.trim()) {
+                    mostrarErro(elemento, `${campo.nome} é obrigatório`);
+                    isValid = false;
+                }
+            });
+            
+            // Validação específica da descrição
+            const descricao = document.getElementById('descricaoDenuncia');
+            if (descricao.value.length < 50) {
+                mostrarErro(descricao, 'Descreva com mais detalhes (mínimo 50 caracteres)');
+                isValid = false;
+            }
+            
+            // Validação da prioridade
+            if (!prioridadeSelecionada) {
+                const prioridadeContainer = document.querySelector('.prioridade-container');
+                const errorDiv = prioridadeContainer.parentElement.querySelector('.error-message');
+                if (errorDiv) {
+                    errorDiv.style.display = 'flex';
+                    isValid = false;
+                }
+            }
+            
+            // Validação do checkbox
+            const checkTermos = document.getElementById('checkVeracidadeDenuncia');
+            if (!checkTermos.checked) {
+                const errorTermos = document.getElementById('errorTermosDenuncia');
+                errorTermos.style.display = 'flex';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                enviarDenuncia();
+            } else {
+                const message = document.getElementById('messageDenuncia');
+                message.className = 'form-message error';
+                message.textContent = 'Corrija os erros antes de enviar a denúncia';
+                message.style.display = 'block';
+                
+                // Scroll para o primeiro erro
+                const primeiroErro = document.querySelector('.input-error');
+                if (primeiroErro) {
+                    primeiroErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            
+            return false;
+        }
+
+        function enviarDenuncia() {
+            const message = document.getElementById('messageDenuncia');
+            message.className = 'form-message success';
+            message.innerHTML = '✅ <strong>Denúncia registrada com sucesso!</strong><br>' +
+                               'Código de acompanhamento: #D' + Math.floor(Math.random() * 1000000) + '<br>' +
+                               '<small style="font-size: 12px;">Sua denúncia será analisada em até 10 dias úteis.</small>';
+            message.style.display = 'block';
+            
+            // Scroll para mensagem
+            setTimeout(() => {
+                message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+            
+            // Efeito visual no botão
+            const btnDenuncia = document.querySelector('#aba-denuncia .btn-danger');
+            btnDenuncia.style.transform = 'scale(0.95)';
+            setTimeout(() => btnDenuncia.style.transform = '', 300);
+        }
+
+        // ===== FUNÇÕES PARA TRANSPARÊNCIA FISCAL =====
+        function atualizarEstatisticas() {
+            const btn = document.querySelector('#aba-transparencia .btn-primary');
+            const originalText = btn.innerHTML;
+            
+            // Mostrar loading
+            btn.innerHTML = '<div class="loader" style="display:block; width: 20px; height: 20px; margin-right: 10px;"></div> Atualizando...';
+            btn.disabled = true;
+            
+            // Simular atualização
+            setTimeout(() => {
+                // Atualizar dados
+                atualizarImpostometro();
+                
+                // Restaurar botão
+                btn.innerHTML = '🔄 Atualizar Estatísticas';
+                btn.disabled = false;
+                
+                // Mostrar mensagem de sucesso
+                const formCard = document.querySelector('#aba-transparencia .form-card');
+                formCard.style.boxShadow = '0 0 30px rgba(40, 167, 69, 0.3)';
+                setTimeout(() => formCard.style.boxShadow = '', 1000);
+            }, 1500);
+        }
+
+        function exportarDados() {
+            alert('✅ Relatório exportado com sucesso!\nO arquivo foi salvo no formato PDF.\nNome: relatorio_fiscal_marcone_' + new Date().toISOString().slice(0,10) + '.pdf');
+        }
+
+        // Validação em tempo real para campos obrigatórios
+        document.addEventListener('DOMContentLoaded', function() {
+            const topBarImg = document.querySelector('.top-bar img[alt="União e Reconstrução"]');
+            if(topBarImg) {
+                topBarImg.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                });
+                topBarImg.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            }
+            
+            // Validação em tempo real para campos obrigatórios
+            document.querySelectorAll('input[required], select[required], textarea[required]').forEach(elemento => {
+                elemento.addEventListener('blur', function() {
+                    if (!this.value.trim()) {
+                        mostrarErro(this, 'Campo obrigatório');
+                    } else {
+                        limparErro(this);
+                    }
+                });
+                
+                elemento.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        limparErro(this);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
