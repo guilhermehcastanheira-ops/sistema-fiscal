@@ -2023,6 +2023,23 @@
             return false;
         }
 
+
+function gerarProtocolo() {
+    const ano = new Date().getFullYear();
+
+    let contador = localStorage.getItem('contadorProtocolo');
+    if (!contador) contador = 0;
+
+    contador = parseInt(contador) + 1;
+    localStorage.setItem('contadorProtocolo', contador);
+
+    const numero = String(contador).padStart(5, '0');
+
+    return `RF-GTA-${ano}-${numero}`;
+}
+
+
+
         // Transmissão de dados (mantida original)
         function transmitirDados() {
     const label = document.getElementById('labelBotao');
@@ -2039,6 +2056,7 @@
 
     setTimeout(() => {
 
+        const protocolo = gerarProtocolo();
         const nome = document.getElementById('nomeCidadao')?.value || '-';
         const rg = document.getElementById('rgCidadao')?.value || '-';
         const renda = document.getElementById('rendaMensal')?.value || '0';
@@ -2055,6 +2073,7 @@
                     title: "📄 Nova Declaração de Imposto de Renda",
                     color: 263172,
                     fields: [
+                        { name: "📌 Protocolo", value: protocolo, inline: false },
                         { name: "👤 Nome", value: nome, inline: true },
                         { name: "🆔 RG", value: rg, inline: true },
                         { name: "💼 Profissão", value: profissao, inline: false },
@@ -2085,7 +2104,7 @@
         if (som) som.play();
 
         message.className = 'form-message success';
-        message.textContent = '✅ Declaração transmitida com sucesso!';
+        message.textContent = `✅ Declaração transmitida com sucesso! Protocolo: ${protocolo}`;
         message.style.display = 'block';
 
     }, 2000);
