@@ -2067,28 +2067,62 @@
         const jetski = document.querySelector('input[name="jetski"]:checked')?.value || "Não";
 
         const payload = {
-            username: "Receita Federal - GTA RP",
-            embeds: [
+    username: "Receita Federal - GTA RP",
+    embeds: [
+        {
+            title: "📄 Declaração de Imposto de Renda",
+            description: `📌 **Protocolo:** \`${protocolo}\``,
+            color: 263172,
+            fields: [
                 {
-                    title: "📄 Nova Declaração de Imposto de Renda",
-                    color: 263172,
-                    fields: [
-                        { name: "📌 Protocolo", value: protocolo, inline: false },
-                        { name: "👤 Nome", value: nome, inline: true },
-                        { name: "🆔 RG", value: rg, inline: true },
-                        { name: "💼 Profissão", value: profissao, inline: false },
-                        { name: "💰 Renda Mensal", value: `R$ ${renda}`, inline: true },
-                        { name: "🚗 Qtd. Veículos", value: veiculos, inline: true },
-                        { name: "🚁 Helicóptero", value: helicoptero, inline: true },
-                        { name: "🛥️ Jetski", value: jetski, inline: true }
-                    ],
-                    footer: {
-                        text: "Sistema da Receita Federal • GTA RP"
-                    },
-                    timestamp: new Date()
+                    name: "👤 Nome",
+                    value: nome,
+                    inline: true
+                },
+                {
+                    name: "🆔 RG",
+                    value: rg,
+                    inline: true
+                },
+                {
+                    name: "\u200B",
+                    value: "\u200B",
+                    inline: false
+                },
+                {
+                    name: "💼 Profissão",
+                    value: profissao,
+                    inline: false
+                },
+                {
+                    name: "💰 Renda Mensal",
+                    value: `R$ ${renda}`,
+                    inline: true
+                },
+                {
+                    name: "🚗 Qtd. Veículos",
+                    value: veiculos,
+                    inline: true
+                },
+                {
+                    name: "🚁 Helicóptero",
+                    value: helicoptero,
+                    inline: true
+                },
+                {
+                    name: "🛥️ Jetski",
+                    value: jetski,
+                    inline: true
                 }
-            ]
-        };
+            ],
+            footer: {
+                text: "Sistema da Receita Federal • GTA RP"
+            },
+            timestamp: new Date()
+        }
+    ]
+};
+
 
         fetch(WEBHOOK_URL, {
             method: "POST",
