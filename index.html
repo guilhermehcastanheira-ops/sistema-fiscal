@@ -2071,54 +2071,30 @@
     embeds: [
         {
             title: "📄 Declaração de Imposto de Renda",
-            description: `📌 **Protocolo:** \`${protocolo}\``,
+            description:
+`📌 **PROTOCOLO**
+\`${protocolo}\`
+
+━━━━━━━━━━━━━━━━━━
+
+👤 **Nome:** ${nome}
+🆔 **RG:** ${rg}
+
+💼 **Profissão:** ${profissao}
+
+💰 **Renda Mensal:** R$ ${renda}
+🚗 **Qtd. Veículos:** ${veiculos}
+
+🚁 **Helicóptero:** ${helicoptero}
+🛥️ **Jetski:** ${jetski}
+
+━━━━━━━━━━━━━━━━━━
+
+📅 **Registro:** ${new Date().toLocaleString("pt-BR")}`,
             color: 263172,
-            fields: [
-                {
-                    name: "👤 Nome",
-                    value: nome,
-                    inline: true
-                },
-                {
-                    name: "🆔 RG",
-                    value: rg,
-                    inline: true
-                },
-                {
-                    name: "\u200B",
-                    value: "\u200B",
-                    inline: false
-                },
-                {
-                    name: "💼 Profissão",
-                    value: profissao,
-                    inline: false
-                },
-                {
-                    name: "💰 Renda Mensal",
-                    value: `R$ ${renda}`,
-                    inline: true
-                },
-                {
-                    name: "🚗 Qtd. Veículos",
-                    value: veiculos,
-                    inline: true
-                },
-                {
-                    name: "🚁 Helicóptero",
-                    value: helicoptero,
-                    inline: true
-                },
-                {
-                    name: "🛥️ Jetski",
-                    value: jetski,
-                    inline: true
-                }
-            ],
             footer: {
                 text: "Sistema da Receita Federal • GTA RP"
-            },
-            timestamp: new Date()
+            }
         }
     ]
 };
