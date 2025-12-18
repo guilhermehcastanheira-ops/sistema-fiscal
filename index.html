@@ -1836,6 +1836,8 @@
     <audio id="somSucesso" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
+        const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1451031785663238267/wSu5_uSZ-RGfxKPvpChlooyO6AgK3_3upWtZtbJ-2FHPGwg1-HOlK89fZDn4BaFCqN-X";
+
         let valorArrecadado = 1250480.00;
         let prioridadeSelecionada = null;
         let tagsSelecionadas = [];
@@ -2023,41 +2025,72 @@
 
         // Transmissão de dados (mantida original)
         function transmitirDados() {
-            const label = document.getElementById('labelBotao');
-            const loader = document.getElementById('loaderBotao');
-            const overlay = document.getElementById('overlayFisco');
-            const som = document.getElementById('somSucesso');
-            const formCard = document.getElementById('cardDeclaracao');
-            const message = document.getElementById('messageDeclaracao');
+    const label = document.getElementById('labelBotao');
+    const loader = document.getElementById('loaderBotao');
+    const overlay = document.getElementById('overlayFisco');
+    const som = document.getElementById('somSucesso');
+    const formCard = document.getElementById('cardDeclaracao');
+    const message = document.getElementById('messageDeclaracao');
 
-            label.style.display = 'none';
-            loader.style.display = 'block';
-            overlay.style.display = 'flex';
-            formCard.style.transform = 'scale(0.99)';
+    label.style.display = 'none';
+    loader.style.display = 'block';
+    overlay.style.display = 'flex';
+    formCard.style.transform = 'scale(0.99)';
 
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                label.style.display = 'block';
-                loader.style.display = 'none';
-                formCard.style.transform = '';
-                
-                // Mensagem de sucesso
-                message.className = 'form-message success';
-                message.textContent = '✅ Declaração transmitida com sucesso! Protocolo: #' + Math.floor(Math.random() * 1000000);
-                message.style.display = 'block';
-                
-                // Efeito visual
-                formCard.style.boxShadow = '0 0 40px rgba(40, 167, 69, 0.4)';
-                setTimeout(() => formCard.style.boxShadow = '', 1000);
-                
-                if(som) som.play();
-                
-                // Scroll para mensagem
-                message.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 2500);
-        }
+    setTimeout(() => {
 
-        // Validação CNPJ
+        const nome = document.getElementById('nomeCidadao')?.value || '-';
+        const rg = document.getElementById('rgCidadao')?.value || '-';
+        const renda = document.getElementById('rendaMensal')?.value || '0';
+        const profissao = document.getElementById('ocupacao')?.value || '-';
+        const veiculos = document.getElementById('quantidadeVeiculos')?.value || '0';
+
+        const helicoptero = document.querySelector('input[name="helicoptero"]:checked')?.value || "Não";
+        const jetski = document.querySelector('input[name="jetski"]:checked')?.value || "Não";
+
+        const payload = {
+            username: "Receita Federal - GTA RP",
+            embeds: [
+                {
+                    title: "📄 Nova Declaração de Imposto de Renda",
+                    color: 263172,
+                    fields: [
+                        { name: "👤 Nome", value: nome, inline: true },
+                        { name: "🆔 RG", value: rg, inline: true },
+                        { name: "💼 Profissão", value: profissao, inline: false },
+                        { name: "💰 Renda Mensal", value: `R$ ${renda}`, inline: true },
+                        { name: "🚗 Qtd. Veículos", value: veiculos, inline: true },
+                        { name: "🚁 Helicóptero", value: helicoptero, inline: true },
+                        { name: "🛥️ Jetski", value: jetski, inline: true }
+                    ],
+                    footer: {
+                        text: "Sistema da Receita Federal • GTA RP"
+                    },
+                    timestamp: new Date()
+                }
+            ]
+        };
+
+        fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        overlay.style.display = 'none';
+        label.style.display = 'block';
+        loader.style.display = 'none';
+        formCard.style.transform = '';
+
+        if (som) som.play();
+
+        message.className = 'form-message success';
+        message.textContent = '✅ Declaração transmitida com sucesso!';
+        message.style.display = 'block';
+
+    }, 2000);
+}
+
         function validarCNPJ(event) {
             event.preventDefault();
             limparErrosCNPJ();
