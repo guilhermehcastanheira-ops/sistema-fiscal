@@ -1837,8 +1837,74 @@
 
     <script>
         const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1451031785663238267/wSu5_uSZ-RGfxKPvpChlooyO6AgK3_3upWtZtbJ-2FHPGwg1-HOlK89fZDn4BaFCqN-X";
-        
+        const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1469067574523465771/7XVqbTQxjWegP40q5Qa5AVT2WZ67dDAT5Q8uVxtJ394xiCz5dzAN_Uuy-5e1dp1OpM9w";
 
+        function enviarImposto() {
+
+    const nome = document.getElementById("nome").value;
+    const rg = document.getElementById("rg").value;
+
+    const payload = {
+        username: "Receita Federal - GTA RP",
+        content: `📄 Nova Declaração de Imposto\nNome: ${nome}\nRG: ${rg}`
+    };
+
+    fetch(webhookIR, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+}
+
+
+// =======================
+// CNPJ
+// =======================
+function enviarCNPJ() {
+
+    const nome = document.getElementById("nome").value;
+    const rg = document.getElementById("rg").value;
+    const contato = document.getElementById("contato").value;
+    const empresa = document.getElementById("empresa").value;
+    const endereco = document.getElementById("endereco").value;
+    const natureza = document.getElementById("natureza").value;
+    const porte = document.getElementById("porte").value;
+    const socios = document.getElementById("socios").value;
+
+    const protocolo = "CNPJ-" + Date.now();
+
+    const payload = {
+        username: "Receita Federal - GTA RP",
+        embeds: [{
+            title: "📑 Nova Solicitação de CNPJ",
+            description: `📌 Protocolo: ${protocolo}`,
+            color: 3447003,
+            fields: [
+                { name: "👤 Nome", value: nome || "Não informado", inline: true },
+                { name: "🆔 RG", value: rg || "Não informado", inline: true },
+                { name: "📞 Contato", value: contato || "Não informado", inline: true },
+                { name: "🏢 Empresa", value: empresa || "Não informado", inline: false },
+                { name: "📍 Endereço", value: endereco || "Não informado", inline: false },
+                { name: "📂 Natureza Jurídica", value: natureza || "Não informado", inline: true },
+                { name: "📊 Porte", value: porte || "Não informado", inline: true },
+                { name: "👥 Sócios", value: socios || "Nenhum", inline: false }
+            ],
+            footer: { text: "Sistema CNPJ • GTA RP" },
+            timestamp: new Date()
+        }]
+    };
+
+    fetch(webhookCNPJ, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+}
+
+
+          // SEPARAÇÃO ANTES
         let valorArrecadado = 1250480.00;
         let prioridadeSelecionada = null;
         let tagsSelecionadas = [];
@@ -2412,50 +2478,7 @@
                 });
             });
         });
-      const webhookCNPJ = "https://discordapp.com/api/webhooks/1469067574523465771/7XVqbTQxjWegP40q5Qa5AVT2WZ67dDAT5Q8uVxtJ394xiCz5dzAN_Uuy-5e1dp1OpM9w";
-          function enviarCNPJ() {
-
-    const nome = document.getElementById("nome").value;
-    const rg = document.getElementById("rg").value;
-    const contato = document.getElementById("contato").value;
-    const empresa = document.getElementById("empresa").value;
-    const endereco = document.getElementById("endereco").value;
-    const natureza = document.getElementById("natureza").value;
-    const porte = document.getElementById("porte").value;
-    const socios = document.getElementById("socios").value;
-
-    const protocolo = "CNPJ-" + Math.floor(Math.random() * 999999);
-
-    const payload = {
-        username: "Receita Federal - GTA RP",
-        embeds: [{
-            title: "📑 Nova Solicitação de CNPJ",
-            description: `📌 **Protocolo:** ${protocolo}`,
-            color: 3447003,
-            fields: [
-                { name: "👤 Nome", value: nome, inline: true },
-                { name: "🆔 RG", value: rg, inline: true },
-                { name: "📞 Contato", value: contato, inline: true },
-                { name: "🏢 Empresa", value: empresa, inline: false },
-                { name: "📍 Endereço", value: endereco, inline: false },
-                { name: "📂 Natureza Jurídica", value: natureza, inline: true },
-                { name: "📊 Porte", value: porte, inline: true },
-                { name: "👥 Sócios", value: socios || "Nenhum", inline: false }
-            ],
-            footer: { text: "Sistema CNPJ • GTA RP" },
-            timestamp: new Date()
-        }]
-    };
-
-    fetch(webhookCNPJ, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
-
-}
-
-
+    
     </script>
 </body>
 </html>
